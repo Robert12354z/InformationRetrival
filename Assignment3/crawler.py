@@ -10,17 +10,17 @@ from bs4 import BeautifulSoup
 import pymongo
 from collections import deque
 
-# MongoDB setup
+
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["crawler_db"]
 collection = db["pages"]
 
-# Global Variables
+
 START_URL = "https://www.cpp.edu/sci/computer-science/"
 TARGET_HEADING = '<h1 class="cpp-h1">Permanent Faculty</h1>'
 TARGET_URL = "https://www.cpp.edu/sci/computer-science/faculty-and-staff/permanent-faculty.shtml"
 
-# Frontier Class
+
 class Frontier:
     def __init__(self):
         self.queue = deque([START_URL])
@@ -39,7 +39,7 @@ class Frontier:
     def mark_visited(self, url):
         self.visited.add(url)
 
-# Function to retrieve HTML
+
 def retrieveHTML(url):
     try:
         with urllib.request.urlopen(url) as response:
@@ -49,11 +49,9 @@ def retrieveHTML(url):
         print(f"Failed to retrieve {url}: {e}")
     return None
 
-# Function to store HTML in MongoDB
 def storePage(url, html):
     collection.insert_one({"url": url, "html": html})
 
-# Function to parse HTML and extract links
 def parse(html, base_url):
     soup = BeautifulSoup(html, "html.parser")
     links = set()
@@ -64,16 +62,15 @@ def parse(html, base_url):
             links.add(full_url)
     return links
 
-# Function to check if the target page is found
 def is_target_page(html):
     return TARGET_HEADING in str(html)
 
-# Function to check if a URL is valid
+
 def is_valid_url(url):
     parsed = urlparse(url)
     return parsed.scheme in ('http', 'https') and url.endswith(('.html', '.shtml'))
 
-# Crawler Procedure
+
 def crawlerThread(frontier):
     while not frontier.done():
         url = frontier.nextURL()
@@ -87,19 +84,18 @@ def crawlerThread(frontier):
         
         storePage(url, html)
 
-        # Check if the target page is found
+  
         if is_target_page(html):
             print(f"Target page found at: {url}")
             return
 
-        # Extract and add new URLs to the frontier
         new_urls = parse(html, url)
         for new_url in new_urls:
             frontier.addURL(new_url)
 
     print("Target page not found.")
 
-# Main Execution
+
 if __name__ == "__main__":
     frontier = Frontier()
     crawlerThread(frontier)
