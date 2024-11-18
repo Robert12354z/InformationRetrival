@@ -14,6 +14,18 @@ db = client["crawler_db"]
 pages_collection = db["pages"]
 professors_collection = db["professors"]
 
+def main():
+    
+    target_page = pages_collection.find_one({"url": "https://www.cpp.edu/sci/computer-science/faculty-and-staff/permanent-faculty.shtml"})
+    if not target_page:
+        print("Faculty page not found in the database.")
+        return
+
+    html_content = target_page['html']
+    professors = extract_faculty_info(html_content)
+    store_professors_data(professors)
+   
+
 def extract_faculty_info(html):
     soup = BeautifulSoup(html, "html.parser")
     professors = []
@@ -60,17 +72,7 @@ def store_professors_data(professors):
         professors_collection.insert_many(professors)
         print(f"Inserted {len(professors)} professor records into MongoDB.")
 
-def main():
-    
-    target_page = pages_collection.find_one({"url": "https://www.cpp.edu/sci/computer-science/faculty-and-staff/permanent-faculty.shtml"})
-    if not target_page:
-        print("Faculty page not found in the database.")
-        return
 
-    html_content = target_page['html']
-    professors = extract_faculty_info(html_content)
-    store_professors_data(professors)
-   
 
 if __name__ == "__main__":
     main()
